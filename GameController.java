@@ -11,6 +11,7 @@ public class GameController {
 	private Timer heroTimer;
 	private Timer levelTimer;
 	private GameHero hero;
+	private ScoreBoard scoreBoard;
 	
 	private GameLevel level;
 	private boolean running = false;
@@ -20,15 +21,18 @@ public class GameController {
 		hero = new GameHero(150, 300, 30, 30);
 		level = new GameLevel();
 		view = new GameView(level, hero, this);
+		scoreBoard = new ScoreBoard(5);
 		view.addKeyListener(new KeyController());
-		heroTimer = new Timer(40, new ActionListener() {
+		heroTimer = new Timer(30, new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				int score = view.getScore();
+				level.update();
 				view.setScore(score + 1);
 				if (score % 100 == 0) {
 					level.decreaseGap();
 				}
 				hero.move();
+
 				if (isColliding()) {
 					view.update();
 					gameOver();
@@ -58,6 +62,7 @@ public class GameController {
 	}
 	
 	public void restart() {
+		gameover = false;
 		hero = new GameHero(150, 300, 30, 30);
 		level = new GameLevel();
 		view.reset(hero, level);
@@ -65,6 +70,14 @@ public class GameController {
 	}
 
 	private void pause() {
+//		Timer timer = new Timer(1, new ActionListener() {
+//			public void actionPerformed(ActionEvent e) {
+//				hero.dropTail();
+//				view.update();
+//			}
+//		});
+//		timer.start();
+
 		if (running) {
 			running = false;
 			heroTimer.stop();
@@ -113,14 +126,19 @@ public class GameController {
 				break;
 			case KeyEvent.VK_ENTER:
 				if (gameover) {
-					gameover = false;
 					restart();
-				} else {
+		 		} else {
 					pause();
 				}
 				break;
 			case KeyEvent.VK_ESCAPE:
-				System.exit(0);
+				if (running) {
+					pause();
+				}
+				view.showExitDialog();
+				if (!running) {
+					pause();
+				}
 				break;
 			}
 		}
@@ -129,5 +147,9 @@ public class GameController {
 				hero.goDown();
 			}
 		}
+	}
+	
+	public static void main(String[] args) {
+		new GameController();
 	}
 }

@@ -3,6 +3,7 @@ package SFCave2;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 import javax.swing.*;
 
@@ -12,12 +13,14 @@ public class GameView extends JFrame {
 	private GameHero hero;
 	private GameLevel level;
 	private GameController controller;
+	private ScoreBoard scoreBoard;
 	private int score;
 	
 	public GameView(GameLevel level, GameHero hero, GameController controller) {
 		this.hero = hero;
 		this.level = level;
 		this.controller = controller;
+		scoreBoard = new ScoreBoard(5);
 		score = 0;
 		
 		setTitle("SFCave");
@@ -55,14 +58,83 @@ public class GameView extends JFrame {
 		
 		item = new JMenuItem("High score");
 		menu.add(item);
+		item.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				showScoreBoard();
+			}
+		});
+		
+		item = new JMenuItem("Clear high score");
+		menu.add(item);
+		item.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				showClearScoreBoard();
+			}
+		});
+		
+		item = new JMenuItem("Information");
+		menu.add(item);
+		item.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				showInformationDialog();
+			}
+		});
 		
 		item = new JMenuItem("Exit");
 		menu.add(item);
 		item.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				System.exit(0);
+				showExitDialog();
 			}
 		});
+	}
+	
+	public void showScoreBoard() {
+		String[] entries = new String[5];
+		ArrayList<HighScore> scores = scoreBoard.getScores();
+		
+		for (int i = 0; i < scores.size(); i++) {
+			entries[i] = scores.get(i).toString();
+		}
+
+		JList list = new JList(entries);
+		JPanel panel = new JPanel();
+		panel.add(new JLabel("High scores"));
+		panel.add(list);
+		JOptionPane.showMessageDialog(list, panel,
+				"High score", JOptionPane.INFORMATION_MESSAGE);
+	}
+	
+	public void showInformationDialog() {
+		String title = "Information";
+		String message = "In this game you control a flying cat trying not to " 
+				    + "hit the surrounding terrain.\n You control the vertical "
+				    + "position of the cat by holding the space button and "
+				    + "releasing it.";
+		JOptionPane.showMessageDialog(this, message,
+				title, JOptionPane.INFORMATION_MESSAGE);
+	}
+	
+	public void showClearScoreBoard() {
+		String title = "Clear score board";
+		String message = "Are you sure you want to clear the score board?";
+		int answer = JOptionPane.showConfirmDialog(this, message,
+				title, JOptionPane.OK_CANCEL_OPTION,
+				JOptionPane.WARNING_MESSAGE);
+		if (answer == JOptionPane.OK_OPTION) {
+			scoreBoard.clear();
+		}
+	}
+	
+	public void showExitDialog() {
+		String title = "Exit";
+		String message = "Are you sure you want to exit this game?";
+		int answer = JOptionPane.showConfirmDialog(this, message,
+				title, JOptionPane.OK_CANCEL_OPTION,
+				JOptionPane.WARNING_MESSAGE);
+		if (answer == JOptionPane.OK_OPTION) {
+			System.exit(0);
+		}
 	}
 	
 	public int getScore() {
@@ -80,6 +152,7 @@ public class GameView extends JFrame {
 	private class GameBoard extends JPanel {
 		private static final long serialVersionUID = 1L;
 
+		@Override
 		public void paintComponent(Graphics g) {
 			super.paintComponent(g);
 			paintLevel(g);
@@ -91,10 +164,22 @@ public class GameView extends JFrame {
 		}
 		
 		public void paintInfo(Graphics g) {
+			g.setColor(Color.BLACK);
 			g.drawString("Score: " + score, 20, 20);
 			if (controller.isGameover()) {
+				paintDeathHero(g);
 				g.setFont(new Font("serif", 40, 40));
-				g.drawString("GAME OVER - Press enter to restart", 100, 50);
+				g.drawString("GAME OVER - Press enter to restart", 100, 100);
+				if (scoreBoard.isHighScore(score)) {
+					g.drawString("NEW HIGH SCORE", 100, 180);
+					String name = JOptionPane.showInputDialog(this, "You made it to the high score list, enter your name: ", "");
+					if (name == null || name.trim().equals("")) {
+						name = "Anonymous";
+					}
+					scoreBoard.addScore(name, score);
+				}
+				showScoreBoard();
+				
 			} else if (!controller.isRunning()) {
 				g.drawString("Press enter to continue", 300, 200);
 			}
@@ -106,6 +191,15 @@ public class GameView extends JFrame {
 			g2d.setColor(Color.BLACK);
 			g2d.fill(hero);
 			g2d.drawImage(hero.getImage(), (int) hero.getX(), (int) hero.getY(), null);
+			
+			for (Rectangle r : hero.getTail()) {
+				g2d.fill(r);
+			}
+		}
+		
+		public void paintDeathHero(Graphics g) {
+			Graphics2D g2d = (Graphics2D) g;
+			
 			
 			for (Rectangle r : hero.getTail()) {
 				g2d.fill(r);

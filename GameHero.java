@@ -13,6 +13,8 @@ import javax.swing.ImageIcon;
 /**
  * This is the unit controlled by the player
  *
+ * @author Sami Purmonen, Nils Dahlberg
+ * @version 2013.05.01
  */
 public class GameHero extends Rectangle {
 	private static final long serialVersionUID = 1L;
@@ -21,7 +23,6 @@ public class GameHero extends Rectangle {
 	private LinkedList<Rectangle> tail;
 	private int tailHeight;
     private Image image;
-
 	
 	public GameHero(int x, int y, int width, int height) {
 		super(x, y, width, height);
@@ -54,6 +55,12 @@ public class GameHero extends Rectangle {
 		tail.removeFirst();
 		tail.add(new Rectangle(0, y + height / 2 - tailHeight / 2, tailHeight, tailHeight));
 		updateX();
+	}
+	
+	public void dropTail() {
+		for (Rectangle r : tail) {
+			r.y++;
+		}
 	}
 	
 	private void updateX() {

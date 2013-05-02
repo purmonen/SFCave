@@ -9,35 +9,34 @@ import javax.imageio.ImageIO;
 public class GameLevel {
 	private int height;
 	private int width;
-	private int pieces;
-	private int gap;
+	//Number of horizontal rectangles
+	private int pieces; 
 	private int pieceWidth;
+	//Height of the gap between the upper and lower bounds
+	private int gap;
 	private Random random;
+	//Upper rectangles
 	private LinkedList<Rectangle> upperBounds;
+	//Lower rectangles
 	private LinkedList<Rectangle> lowerBounds;
 	private Rectangle rock;
-	private Image shark;
 	private int lastUpperBound;
+	//Point that the upperbound is trying to reach
 	private int destination;
+	//Difference in vertical pixels between two connecting pieces
 	private int step;
 
 	public GameLevel() {
 		height = 600;
-		width = 750;
-		pieces = 150;
-		gap = 300;
+		width = 1000;
+		pieces = 200;
+		gap = 400;
 		step = 2;
-		destination = 250;
+		destination = 80;
 		destination -= destination % step;
-		lastUpperBound = 50;
+		lastUpperBound = 30;
 		lastUpperBound -= lastUpperBound % step;
 		random = new Random();
-		try {
-			shark = ImageIO.read(getClass().getResource("cat.jpg"));
-			shark = shark.getScaledInstance(40, 40, 1);
-		} catch (IOException e) {
-			System.out.println(e.getMessage());
-		}
 		upperBounds = new LinkedList<Rectangle>();
 		lowerBounds = new LinkedList<Rectangle>();
 		rock = new Rectangle(-20, 0, 20, 20);
