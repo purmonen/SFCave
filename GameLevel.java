@@ -1,11 +1,15 @@
 package SFCave2;
 
-import java.io.IOException;
 import java.util.*;
 import java.awt.*;
 
-import javax.imageio.ImageIO;
-
+/**
+ * A randomized game level.
+ * 
+ * @author Sami Purmonen and Nils Dahlberg
+ * @version 2013.05.02
+ *
+ */
 public class GameLevel {
 	private int height;
 	private int width;
@@ -29,9 +33,9 @@ public class GameLevel {
 	public GameLevel() {
 		height = 600;
 		width = 1000;
-		pieces = 200;
-		gap = 400;
-		step = 2;
+		pieces = 100;
+		gap = 350;
+		step = 4;
 		destination = 80;
 		destination -= destination % step;
 		lastUpperBound = 30;
@@ -51,6 +55,14 @@ public class GameLevel {
 		return rock;
 	}
 	
+	public int getPieceWidth() {
+		return pieceWidth;
+	}
+	
+	/**
+	 * Moves the rock one piece per call and makes a new rock
+	 * if it falls of the left side.
+	 */
 	public void moveRock() {
 		int x = (int) rock.getX() - pieceWidth;
 		int y = (int) rock.getY();
@@ -69,8 +81,12 @@ public class GameLevel {
 		rock = new Rectangle(x, y, width, height);
 	}
 	
+	/**
+	 * Decreses the height of the gap in which you are allowed
+	 * to fly in.
+	 */
 	public void decreaseGap() {
-		gap -= 10;
+		gap -= 15;
 	}
 	
 	public int getHeight() {
@@ -94,6 +110,7 @@ public class GameLevel {
 		
 		int upperHeight = lastUpperBound;
 		int lowerHeight = height - upperHeight - gap;
+		
 		upperBounds.add(new Rectangle(0, 0, pieceWidth, upperHeight));
 		lowerBounds.add(new Rectangle(0, upperHeight + gap, pieceWidth, lowerHeight));
 	}
@@ -125,6 +142,10 @@ public class GameLevel {
 		}
 	}
 	
+	/**
+	 * Updates the level by removing old terrain
+	 * and creating new and moving the rock.
+	 */
 	public void update() {
 		removeFirstPair();
 		addRandomPair();

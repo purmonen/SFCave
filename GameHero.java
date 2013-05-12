@@ -1,19 +1,14 @@
 package SFCave2;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.LinkedList;
-
 import javax.imageio.*;
-import javax.swing.ImageIcon;
 
 /**
  * This is the unit controlled by the player
  *
- * @author Sami Purmonen, Nils Dahlberg
+ * @author Sami Purmonen and Nils Dahlberg
  * @version 2013.05.01
  */
 public class GameHero extends Rectangle {
@@ -33,7 +28,7 @@ public class GameHero extends Rectangle {
 
 		try {
 			image = ImageIO.read(getClass().getResource("cat.jpg"));
-			image = image.getScaledInstance(width, height, 1);
+			image = image.getScaledInstance(width + 4, height + 4, 1);
 		} catch (IOException e) {
 			System.out.println(e.getMessage());
 		}
@@ -76,14 +71,24 @@ public class GameHero extends Rectangle {
 		return tail;
 	}
 	
+	
+	/**
+	 * Change the heroes acceleration so it will go up
+	 */
 	public void goUp() {
 		acceleration = -1;
 	}
 	
+	/**
+	 * Change the heroes acceleration so it will go down
+	 */
 	public void goDown() {
 		acceleration = 1;
 	}
 	
+	/**
+	 * Change the speed in dy direction an change it's y position
+	 */
 	public void move() {
 		dy += acceleration;
 		updateTail();

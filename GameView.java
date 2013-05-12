@@ -7,6 +7,14 @@ import java.util.ArrayList;
 
 import javax.swing.*;
 
+/**
+ * The view is what you see on screen.
+ * It handles all presentation of the
+ * game components.
+ * 
+ * @author Sami Purmonen and Nils Dahlberg
+ * @version 2013.05.02
+ */
 public class GameView extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private GameBoard board;
@@ -14,29 +22,26 @@ public class GameView extends JFrame {
 	private GameLevel level;
 	private GameController controller;
 	private ScoreBoard scoreBoard;
-	private int score;
 	
-	public GameView(GameLevel level, GameHero hero, GameController controller) {
+	public GameView(GameLevel level, GameHero hero, ScoreBoard scoreBoard, GameController controller) {
 		this.hero = hero;
 		this.level = level;
 		this.controller = controller;
-		scoreBoard = new ScoreBoard(5);
-		score = 0;
-		
+		this.scoreBoard = scoreBoard;
 		setTitle("SFCave");
-		setSize(level.getWidth(), level.getHeight());
-		setLocationRelativeTo(null);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		setLayout(new BorderLayout());
 		Container contentPane = getContentPane();
 		board = new GameBoard();
 		contentPane.add(board);
 		makeMenu();
 		setBackground(Color.WHITE);
+		setSize(level.getWidth(), level.getHeight() + 40);
+		setLocationRelativeTo(null);
 		setVisible(true);
 	}
 	
 	public void reset(GameHero hero, GameLevel level) {
-		score = 0;
 		this.hero = hero;
 		this.level = level;
 	}
@@ -45,7 +50,7 @@ public class GameView extends JFrame {
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
 		
-		JMenu menu = new JMenu("Game");
+		JMenu menu = new JMenu("Menu");
 		menuBar.add(menu);
 		
 		JMenuItem item = new JMenuItem("New game");
@@ -94,12 +99,11 @@ public class GameView extends JFrame {
 		ArrayList<HighScore> scores = scoreBoard.getScores();
 		
 		for (int i = 0; i < scores.size(); i++) {
-			entries[i] = scores.get(i).toString();
+			entries[i] = i + 1 + ". " + scores.get(i).toString();
 		}
 
 		JList list = new JList(entries);
 		JPanel panel = new JPanel();
-		panel.add(new JLabel("High scores"));
 		panel.add(list);
 		JOptionPane.showMessageDialog(list, panel,
 				"High score", JOptionPane.INFORMATION_MESSAGE);
@@ -133,74 +137,67 @@ public class GameView extends JFrame {
 				title, JOptionPane.OK_CANCEL_OPTION,
 				JOptionPane.WARNING_MESSAGE);
 		if (answer == JOptionPane.OK_OPTION) {
-			System.exit(0);
+			controller.exit();
 		}
 	}
-	
-	public int getScore() {
-		return score;
-	}
-	
-	public void setScore(int score) {
-		this.score = score;
-	}
-	
+
 	public void update() {
 		board.repaint();
 	}
 	
+	public String showAddScore() {
+		String title = "New high score";
+		String message = "You made it to the high score list, enter your name: ";
+		String name = JOptionPane.showInputDialog(this, message,
+				title, JOptionPane.PLAIN_MESSAGE);
+		
+		if (name == null || name.trim().equals("")) {
+			name = "Anonymous";
+		}
+		return name.trim();
+	}
+	
 	private class GameBoard extends JPanel {
 		private static final long serialVersionUID = 1L;
+		
+		public GameBoard() {
+			setBackground(Color.WHITE);
+		}
 
 		@Override
 		public void paintComponent(Graphics g) {
+			g.setFont(new Font("verdana", 30, 20));
 			super.paintComponent(g);
-			paintLevel(g);
 			paintHero(g);
+			paintLevel(g);
 			paintInfo(g);
-			Graphics2D g2d = (Graphics2D) g;
-			g2d.setColor(Color.GRAY);
-			g2d.fill(level.getRock());
 		}
 		
 		public void paintInfo(Graphics g) {
 			g.setColor(Color.BLACK);
-			g.drawString("Score: " + score, 20, 20);
+			g.drawString("Score: " + scoreBoard.getScore(), 20, 20);
 			if (controller.isGameover()) {
-				paintDeathHero(g);
 				g.setFont(new Font("serif", 40, 40));
 				g.drawString("GAME OVER - Press enter to restart", 100, 100);
-				if (scoreBoard.isHighScore(score)) {
+				if (scoreBoard.isHighScore()) {
 					g.drawString("NEW HIGH SCORE", 100, 180);
-					String name = JOptionPane.showInputDialog(this, "You made it to the high score list, enter your name: ", "");
-					if (name == null || name.trim().equals("")) {
-						name = "Anonymous";
-					}
-					scoreBoard.addScore(name, score);
-				}
-				showScoreBoard();
-				
+				}				
 			} else if (!controller.isRunning()) {
 				g.drawString("Press enter to continue", 300, 200);
+				g.drawString("Use the space button to control the cat", 300, 230);
 			}
-			
 		}
+		
 		
 		public void paintHero(Graphics g) {
 			Graphics2D g2d = (Graphics2D) g;
 			g2d.setColor(Color.BLACK);
 			g2d.fill(hero);
-			g2d.drawImage(hero.getImage(), (int) hero.getX(), (int) hero.getY(), null);
+			g2d.drawImage(hero.getImage(), (int) hero.getX() - 2, (int) hero.getY() - 2, null);
 			
-			for (Rectangle r : hero.getTail()) {
-				g2d.fill(r);
+			if (controller.isGameover()) {
+				g2d.setColor(Color.RED);
 			}
-		}
-		
-		public void paintDeathHero(Graphics g) {
-			Graphics2D g2d = (Graphics2D) g;
-			
-			
 			for (Rectangle r : hero.getTail()) {
 				g2d.fill(r);
 			}
@@ -208,6 +205,8 @@ public class GameView extends JFrame {
 		
 		public void paintLevel(Graphics g) {
 			Graphics2D g2d = (Graphics2D) g;
+			g2d.setColor(Color.GRAY);
+			g2d.fill(level.getRock());
 			g.setColor(Color.GREEN);
 			for (Rectangle r : level.getUpperBounds()) {
 				g2d.fill(r);
@@ -216,6 +215,7 @@ public class GameView extends JFrame {
 			for (Rectangle r : level.getLowerBounds()) {
 				g2d.fill(r);
 			}
+
 		}
 	}
 }

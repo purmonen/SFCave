@@ -2,50 +2,66 @@ package SFCave2;
 
 import java.awt.Rectangle;
 import java.awt.event.*;
+import java.util.Iterator;
+
 import javax.swing.*;
 
-//import java.util.*;
-
+/**
+ * The game controller handles the game logic.
+ * 
+ * @author Sami Purmonen and Nils Dahlberg
+ * @version 2013.05.02
+ */
 public class GameController {
 	private GameView view;
 	private Timer heroTimer;
 	private Timer levelTimer;
 	private GameHero hero;
-	private ScoreBoard scoreBoard;
-	
 	private GameLevel level;
+	private ScoreBoard scoreBoard;
 	private boolean running = false;
 	private boolean gameover = false;
 	
 	public GameController() {
-		hero = new GameHero(150, 300, 30, 30);
+		hero = new GameHero(150, 200, 30, 30);
 		level = new GameLevel();
-		view = new GameView(level, hero, this);
 		scoreBoard = new ScoreBoard(5);
+		view = new GameView(level, hero, scoreBoard, this);
 		view.addKeyListener(new KeyController());
-		heroTimer = new Timer(30, new ActionListener() {
+		heroTimer = new Timer(36, new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				int score = view.getScore();
-				level.update();
-				view.setScore(score + 1);
+				int score = scoreBoard.getScore();
+				scoreBoard.setScore(score + 1);
 				if (score % 100 == 0) {
 					level.decreaseGap();
 				}
 				hero.move();
-
 				if (isColliding()) {
-					view.update();
-					gameOver();
+					endGame();
 				}
 			}
 		});
 		
-		levelTimer = new Timer(10, new ActionListener() {
+		levelTimer = new Timer(18, new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				level.update();
 				view.update();
 			}
 		});
+	}
+	
+	/**
+	 * Game ends - called when the hero crashes
+	 */
+	public void endGame() {
+		pause();
+		gameover = true;
+		view.update();
+		if (scoreBoard.isHighScore()) {
+			String name = view.showAddScore();
+			scoreBoard.addScore(name);
+		}
+		view.showScoreBoard();
 	}
 	
 	public boolean isGameover() {
@@ -56,28 +72,22 @@ public class GameController {
 		return running;
 	}
 	
-	public void gameOver() {
-		gameover = true;
-		pause();
-	}
-	
+	/**
+	 * Restarts the game
+	 */
 	public void restart() {
 		gameover = false;
 		hero = new GameHero(150, 300, 30, 30);
 		level = new GameLevel();
+		scoreBoard.setScore(0);
 		view.reset(hero, level);
 		view.update();
 	}
 
+	/**
+	 * Pauses or unpauses the game
+	 */
 	private void pause() {
-//		Timer timer = new Timer(1, new ActionListener() {
-//			public void actionPerformed(ActionEvent e) {
-//				hero.dropTail();
-//				view.update();
-//			}
-//		});
-//		timer.start();
-
 		if (running) {
 			running = false;
 			heroTimer.stop();
@@ -87,29 +97,30 @@ public class GameController {
 			heroTimer.start();
 			levelTimer.start();
 		}
+		view.update();
 	}
 	
+	/**
+	 * Checks if the hero has crashed
+	 */
 	private boolean isColliding() {
-		int margin = 8;
-		int size = level.getUpperBounds().size();
-		int i = 0;
-		for (Rectangle r : level.getUpperBounds()) {
-			r.y -= margin;
-			if (r.intersects(hero)) {
-				return true;
+		
+		//Calculate which rectangles we must collide check
+		int start = (int) (hero.getX()) / level.getPieceWidth();
+		int end = (int) (hero.getWidth() + hero.getX()) / level.getPieceWidth();
+		
+		
+		Iterator<Rectangle> upper = level.getUpperBounds().iterator();
+		Iterator<Rectangle> lower = level.getLowerBounds().iterator();		
+		
+		for (int i = 0; i < end; i++) {
+			Rectangle up = upper.next();
+			Rectangle low = lower.next();
+			if (i >= start) {
+				if (hero.intersects(up) || hero.intersects(low)) {
+					return true;
+				}
 			}
-			r.y += margin;
-			i++;
-			if (i > size / 2) {
-				break;
-			}
-		}
-		for (Rectangle r : level.getLowerBounds()) {
-			r.y += margin;
-			if (r.intersects(hero)) {
-				return true;
-			}
-			r.y -= margin;
 		}
 
 		if (level.getRock().intersects(hero)) {
@@ -136,9 +147,6 @@ public class GameController {
 					pause();
 				}
 				view.showExitDialog();
-				if (!running) {
-					pause();
-				}
 				break;
 			}
 		}
@@ -147,6 +155,11 @@ public class GameController {
 				hero.goDown();
 			}
 		}
+	}
+	
+	public void exit() {
+		scoreBoard.writeScores();
+		System.exit(0);
 	}
 	
 	public static void main(String[] args) {
